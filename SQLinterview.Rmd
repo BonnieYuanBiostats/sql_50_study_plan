@@ -1,0 +1,1430 @@
+---
+title: "SQL50-with R and MySQL"
+author: "Bonnie Yuan"
+date: "2025-02-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#install.packages("dplyr")
+library(dplyr)
+```
+
+## 1757. Recyclable and Low Fat Products
+
+```{sql}
+select product_id
+from Products
+where low_fats='Y'
+and recyclable='Y';
+```
+
+```{r}
+# Create the Products data frame
+Products <- data.frame(
+  product_id = c(0, 1, 2, 3, 4),
+  low_fats = c('Y', 'Y', 'N', 'Y', 'N'),
+  recyclable = c('N', 'Y', 'Y', 'Y', 'N')
+)
+# Filter products that are both low fat and recyclable
+result <- Products %>% 
+  filter(low_fats=='Y' &recyclable=='Y' ) %>% 
+  dplyr::select(product_id)
+
+# Display the result
+print(result)
+
+```
+
+## 584. Find Customer Referee
+Find the names of the customer that are not referred by the customer with id = 2.
+
+Return the result table in any order.
+
+
+
+```{sql}
+select name
+from Customer
+where referee_id is null
+or referee_id!=2;
+
+```
+
+```{r}
+library(dplyr)
+
+# Create the Customer data frame
+Customer <- data.frame(
+  id = c(1, 2, 3, 4, 5, 6),
+  name = c('Will', 'Jane', 'Alex', 'Bill', 'Zack', 'Mark'),
+  referee_id = c(NA, NA, 2, NA, 1, 2)
+)
+results<-Customer %>% 
+  filter(referee_id !=2 | is.na(referee_id)) %>% 
+  dplyr::select(name)
+print(results)
+
+```
+## 595. Big Countries
+
+A country is big if:
+
+it has an area of at least three million (i.e., 3000000 km2), or
+it has a population of at least twenty-five million (i.e., 25000000).
+Write a solution to find the name, population, and area of the big countries.
+
+Return the result table in any order.
+
+The result format is in the following example.
+
+```{sql}
+select name, population,area
+from World
+where area>3000000
+or population<25000000;
+
+```
+
+```{r}
+library(dplyr)
+
+# Create the World data frame
+World <- data.frame(
+  name = c('Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola'),
+  continent = c('Asia', 'Europe', 'Africa', 'Europe', 'Africa'),
+  area = c(652230, 28748, 2381741, 468, 1246700),
+  population = c(25500100, 2831741, 37100000, 78115, 20609294),
+  gdp = c(20343000000, 12960000000, 188681000000, 3712000000, 100990000000)
+)
+
+result <- World %>%
+  filter(area >= 3000000 | population >= 25000000) %>%
+  select(name, population, area)
+print(results)
+
+```
+
+## 1148. Article Views I
+
+Write a solution to find all the authors that viewed at least one of their own articles.
+
+Return the result table sorted by id in ascending order.
+
+```{sql}
+select distinct author_id as id
+from Views
+where author_id = viewer_id
+order by 1 asc;
+```
+
+```{r}
+library(dplyr)
+
+# Create the Views data frame
+Views <- data.frame(
+  article_id = c(1, 1, 2, 2, 4, 3, 3),
+  author_id = c(3, 3, 7, 7, 7, 4, 4),
+  viewer_id = c(5, 6, 7, 6, 1, 4, 4),
+  view_date = as.Date(c('2019-08-01', '2019-08-02', '2019-08-01', '2019-08-02', '2019-07-22', '2019-07-21', '2019-07-21'))
+)
+
+results<-Views %>% 
+  filter(author_id ==viewer_id) %>% 
+  dplyr:: select(author_id) %>% 
+  distinct() %>% 
+  rename(id=author_id) %>% 
+  arrange(id)
+print(results)
+```
+
+## 1683. Invalid Tweets
+Write a solution to find the IDs of the invalid tweets. The tweet is invalid if the number of characters used in the content of the tweet is strictly greater than 15.
+
+Return the result table in any order.
+```{sql}
+select tweet_id
+from Tweets
+where char_length(content)>15;
+
+```
+
+```{r}
+library(dplyr)
+
+# Create the Tweets data frame
+Tweets <- data.frame(
+  tweet_id = c(1, 2),
+  content = c("Let us Code", "More than fifteen chars are here!")
+)
+
+results<-Tweets %>% 
+  filter(nchar(content)>15) %>% 
+  select(tweet_id)
+
+print(results)
+```
+
+## 1378. Replace Employee ID With The Unique Identifier
+Write a solution to show the unique ID of each user, If a user does not have a unique ID replace just show null.
+
+Return the result table in any order.
+
+```{sql}
+select em.unique_id, e.name
+from Employees e
+left join EmployeeUNI em
+on e.id=em.id;
+```
+```{r}
+
+# Create Employees data frame
+Employees <- data.frame(
+  id = c(1, 7, 11, 90, 3),
+  name = c('Alice', 'Bob', 'Meir', 'Winston', 'Jonathan')
+)
+
+# Create EmployeeUNI data frame
+EmployeeUNI <- data.frame(
+  id = c(3, 11, 90),
+  unique_id = c(1, 2, 3)
+)
+
+results<-Employees %>% 
+  left_join(EmployeeUNI,by='id') %>% 
+  select(unique_id,name)
+results$unique_id [is.na(results$unique_id)]<-'null'
+print(results)
+```
+## 1068. Product Sales Analysis I
+
+Write a solution to report the product_name, year, and price for each sale_id in the Sales table.
+
+Return the resulting table in any order.
+
+
+```{sql}
+select p.product_name, s.year,s.price
+from Sales s
+left join Product p
+on s.product_id=p.product_id
+
+```
+
+```{r}
+Sales <- data.frame(
+  sale_id = c(1, 2, 7),
+  product_id = c(100, 100, 200),
+  year = c(2008, 2009, 2011),
+  quantity = c(10, 12, 15),
+  price = c(5000, 5000, 9000)
+)
+Product <- data.frame(
+  product_id = c(100, 200, 300),
+  product_name = c('Nokia', 'Apple', 'Samsung')
+)
+result<- Sales %>% 
+  left_join(Product,by="product_id") %>% 
+  select(product_name,year,price)
+print(result)
+
+```
+
+## 1581. Customer Who Visited but Did Not Make Any Transactions
+
+Write a solution to find the IDs of the users who visited without making any transactions and the number of times they made these types of visits.
+
+Return the result table sorted in any order.
+
+
+
+```{sql}
+
+select customer_id,
+count(*) as count_no_trans
+from Visits
+where visit_id not in (
+select distinct visit_id
+from Transactions
+)
+group by customer_id;
+```
+
+
+
+```{r}
+library(dplyr)
+
+# Create Visits data frame
+Visits <- data.frame(
+  visit_id = c(1, 2, 4, 5, 6, 7, 8),
+  customer_id = c(23, 9, 30, 54, 96, 54, 54)
+)
+
+# Create Transactions data frame
+Transactions <- data.frame(
+  transaction_id = c(2, 3, 9, 12, 13),
+  visit_id = c(5, 5, 5, 1, 2),
+  amount = c(310, 300, 200, 910, 970)
+)
+
+results<-Visits %>% 
+  anti_join(Transactions,by='visit_id') %>% 
+  group_by(customer_id) %>% 
+  summarize(count_no_trans = n(),.groups = 'drop') %>% 
+  arrange(desc(count_no_trans))
+print(results)
+```
+## **197. Rising Temperature**
+
+Write a solution to find all dates' id with higher temperatures compared to its previous dates (yesterday).
+
+Return the result table in any order.
+
+```{sql}
+select today.id
+from weather yesterday
+CROSS JOIN weather today
+where datediff(today.recordDate,yesterday.recordDate)=1
+and today.tempreture>yesterday.tempreture;
+```
+
+
+
+
+
+```{sql}
+select id
+from(
+select id,
+lag(temperature,1,null) over(
+order by recordDate
+) as prev_temp
+from Weather
+) t
+where prev_temp<temperature 
+and prev_temp is not null
+
+
+```
+
+```{r}
+library(dplyr)
+
+# Create Weather data frame
+Weather <- data.frame(
+  id = c(1, 2, 3, 4),
+  recordDate = as.Date(c('2015-01-01', '2015-01-02', '2015-01-03', '2015-01-04')),
+  temperature = c(10, 25, 20, 30)
+)
+
+results<-Weather %>% 
+  arrange(recordDate) %>% 
+  mutate(prev_temp = lag(temperature)) %>% 
+  filter(temperature>prev_temp&!is.na(prev_temp)) %>% 
+  select(id)
+
+print(results)
+
+```
+
+## **1661. Average Time of Process per Machine**
+
+```{sql}
+with out_dat as(
+SELECT machine_id, process_id, 
+max(CASE WHEN activity_type = 'start' THEN timestamp END) as start_time,
+max(CASE WHEN activity_type = 'end' THEN timestamp END)as end_time
+from Activity
+GROUP BY machine_id, process_id
+)
+select machine_id,
+round(avg(end_time-start_time),3) as processing_time
+from out_dat
+group by machine_id
+
+
+```
+
+Note:
+If you just use CASE without aggregation (`MAX()`), SQL will try to produce something like:
+
++------------+------------+------------+----------+
+| machine_id | process_id | start_time | end_time |
++------------+------------+------------+----------+
+| 0          | 0          | 0.712      | NULL     |
+| 0          | 0          | NULL       | 1.520    |
+| 0          | 1          | 3.140      | NULL     |
+| 0          | 1          | NULL       | 4.120    |
++------------+------------+------------+----------+
+This doesn't work because start_time and end_time appear on separate rows instead of the same row.
+
+
+
+
+
+```{r}
+library(dplyr)
+
+# Create Activity data frame
+Activity <- data.frame(
+  machine_id = c(0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2),
+  process_id = c(0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1),
+  activity_type = c('start', 'end', 'start', 'end', 'start', 'end', 'start', 'end', 'start', 'end', 'start', 'end'),
+  timestamp = c(0.712, 1.520, 3.140, 4.120, 0.550, 1.550, 0.430, 1.420, 4.100, 4.512, 2.500, 5.000)
+)
+results<-Activity %>% 
+  group_by(machine_id,process_id) %>% 
+  summarise(start_time=timestamp[activity_type=='start'],
+         end_time = timestamp[activity_type=='end'],.groups='drop') %>% 
+  mutate(processing_time=end_time-start_time) %>% 
+  group_by(machine_id) %>% 
+  summarise(processing_time=round(mean(processing_time),3))
+
+print(results)
+```
+
+## 577. Employee Bonus
+
+Write a solution to report the name and bonus amount of each employee with a bonus less than 1000.
+
+Return the result table in any order.
+
+```{sql}
+select e.name, b.bonus
+from Employee e
+left join Bonus b 
+on e.empId = b.empId
+where b.bonus is null or b.bonus < 1000;
+```
+
+```{r}
+Employee <- data.frame(
+  empId = c(3, 1, 2, 4),
+  name = c("Brad", "John", "Dan", "Thomas"),
+  supervisor = c(NA, 3, 3, 3),
+  salary = c(4000, 1000, 2000, 4000)
+)
+
+Bonus <- data.frame(
+  empId = c(2, 4),
+  bonus = c(500, 2000)
+)
+
+Employee %>% 
+  left_join(Bonus,by='empId') %>% 
+  filter(bonus<1000 | is.na(bonus)) %>% 
+  select(name, bonus)
+```
+
+
+## **1280. Students and Examinations**
+
+```{sql}
+with full_sub as (
+select s.student_id, s.student_name, sub.subject_name
+from Students s
+cross join Subjects sub
+),
+counts as(
+select *,
+count(*) as attended_exams
+from Examinations
+group by student_id,subject_name
+)
+select f.student_id, f.student_name,f.subject_name,if.null(c.attended_exams,0) as attended_exams
+from full_sub f
+left join counts c 
+on f.student_id=c.student_id and f.subject_name=c.subject_name
+order by student_id, subject_name
+```
+
+
+```{r}
+library(dplyr)
+
+# Create Students data frame
+Students <- data.frame(
+  student_id = c(1, 2, 13, 6),
+  student_name = c('Alice', 'Bob', 'John', 'Alex')
+)
+
+# Create Subjects data frame
+Subjects <- data.frame(
+  subject_name = c('Math', 'Physics', 'Programming')
+)
+
+# Create Examinations data frame
+Examinations <- data.frame(
+  student_id = c(1, 1, 1, 2, 1, 1, 13, 13, 13, 2, 1),
+  subject_name = c('Math', 'Physics', 'Programming', 'Programming', 'Physics', 'Math', 'Math', 'Programming', 'Physics', 'Math', 'Math')
+)
+
+full_dat<-Students %>% 
+  cross_join(Subjects)
+
+counts<-Examinations %>% 
+  group_by(student_id,subject_name) %>% 
+  summarise(attended_exams = n(),.groups='drop')
+
+full_dat %>% 
+  left_join(counts,by=c('student_id', 'subject_name')) %>% 
+  mutate(attended_exams=ifelse(is.na(attended_exams),0,attended_exams)) %>% 
+    arrange(student_id, subject_name)
+```
+
+## **570. Managers with at Least 5 Direct Reports**
+
+Write a solution to find managers with at least five direct reports.
+
+Return the result table in any order.
+
+
+```{sql}
+select name
+from Employee
+where id in (
+select managerId
+from Employee
+group by managerId
+having count(*) >=5
+)
+```
+
+```{sql}
+with counts as (
+    select *, count(managerId) as counts
+    from Employee
+    group by managerId
+)
+
+select e.name
+from Employee e
+inner join counts c
+on e.id=c.managerId
+where c.counts >=5 and c.counts is not null
+```
+
+```{r}
+Employee <- data.frame(
+  id = c(101, 102, 103, 104, 105, 106),
+  name = c("John", "Dan", "James", "Amy", "Anne", "Ron"),
+  department = c("A", "A", "A", "A", "A", "B"),
+  managerId = c(NA, 101, 101, 101, 101, 101)
+)
+
+managers<-Employee %>%
+  group_by(managerId) %>% 
+  summarise(counts = n()) %>% 
+  filter(counts>=5) 
+Employee %>% 
+  filter(id %in% managers$managerId) %>% 
+  select(name)
+```
+
+
+## 1934. Confirmation Rate
+
+The confirmation rate of a user is the number of 'confirmed' messages divided by the total number of requested confirmation messages. The confirmation rate of a user that did not request any confirmation messages is 0. Round the confirmation rate to two decimal places.
+
+Write a solution to find the confirmation rate of each user.
+
+Return the result table in any order.
+
+```{sql}
+select s.user_id, 
+round(ifnull(avg(c.action='confirmed'),0),2) as confirmation_rate
+from Signups s
+left join Confirmations c
+on s.user_id=c.user_id
+group by user_id
+```
+
+```{r}
+
+library(dplyr)
+
+# Create Signups data frame
+Signups <- data.frame(
+  user_id = c(3, 7, 2, 6),
+  time_stamp = as.POSIXct(c('2020-03-21 10:16:13', '2020-01-04 13:57:59', '2020-07-29 23:09:44', '2020-12-09 10:39:37'))
+)
+
+# Create Confirmations data frame
+Confirmations <- data.frame(
+  user_id = c(3, 3, 7, 7, 7, 2, 2),
+  time_stamp = as.POSIXct(c('2021-01-06 03:30:46', '2021-07-14 14:00:00', '2021-06-12 11:57:29', '2021-06-13 12:58:28', '2021-06-14 13:59:27', '2021-01-22 00:00:00', '2021-02-28 23:59:59')),
+  action = c('timeout', 'timeout', 'confirmed', 'confirmed', 'confirmed', 'confirmed', 'timeout')
+)
+
+confirmation_rate<-Confirmations %>% 
+  group_by(user_id) %>% 
+  summarise(confirmation_rate =round( mean(action=='confirmed'),2))
+  
+confirmation_rate
+
+Signups %>%
+  left_join(confirmation_rate, by = 'user_id') %>%
+  mutate(
+    confirmation_rate = ifelse(is.na(confirmation_rate), 0, confirmation_rate)
+  ) %>%
+  select(user_id, confirmation_rate)
+
+
+result
+
+```
+## 620. Not Boring Movies
+Write a solution to report the movies with an odd-numbered ID and a description that is not "boring".
+
+Return the result table ordered by rating in descending order.
+
+```{sql}
+select *
+from Cinema
+where description!='boring' & id%2!=0
+order by rating desc;
+
+```
+
+```{r}
+Cinema <- data.frame(
+  id = c(1, 2, 3, 4, 5),
+  movie = c("War", "Science", "irish", "Ice song", "House card"),
+  description = c("great 3D", "fiction", "boring", "Fantacy", "Interesting"),
+  rating = c(8.9, 8.5, 6.2, 8.6, 9.1)
+)
+
+Cinema %>% 
+  filter(description!='boring' & id %% 2!= 0) %>% 
+  arrange(desc(rating))
+```
+
+## 1251. Average Selling Price
+
+```{sql}
+select p.product_id, round(ifnull(sum(p.price*u.units)/sum(u.units),0),2) as average_price
+from Prices p
+left join UnitsSold u
+on p.product_id = u.product_id
+and u.purchase_date between p.start_date and p.end_date
+group by product_id
+```
+
+```{r}
+
+# Create Prices data frame
+Prices <- data.frame(
+  product_id = c(1, 1, 2, 2),
+  start_date = as.Date(c('2019-02-17', '2019-03-01', '2019-02-01', '2019-02-21')),
+  end_date = as.Date(c('2019-02-28', '2019-03-22', '2019-02-20', '2019-03-31')),
+  price = c(5, 20, 15, 30)
+)
+
+# Create UnitsSold data frame
+UnitsSold <- data.frame(
+  product_id = c(1, 1, 2, 2),
+  purchase_date = as.Date(c('2019-02-25', '2019-03-01', '2019-02-10', '2019-03-22')),
+  units = c(100, 15, 200, 30)
+)
+
+UnitsSold %>% 
+  left_join(Prices,by='product_id') %>% 
+  filter(purchase_date<=end_date& purchase_date>=start_date) %>% 
+  group_by(product_id) %>% 
+  summarise(average_price = round(sum(price*units)/sum(units),2))
+```
+
+
+## 1075. Project Employees I
+
+reports the average experience years of all the employees for each project, rounded to 2 digits.
+
+Return the result table in any order.
+
+Output: 
++-------------+---------------+
+| project_id  | average_years |
++-------------+---------------+
+| 1           | 2.00          |
+| 2           | 2.50          |
++-------------+---------------+
+
+```{sql}
+select p.project_id, round(avg(experience_years),2) as average_years
+from Project p 
+left join Employee e
+on p.employee_id = e.employee_id
+group by project_id
+```
+
+
+```{r}
+library(dplyr)
+
+# Create Project data frame
+Project <- data.frame(
+  project_id = c(1, 1, 1, 2, 2),
+  employee_id = c(1, 2, 3, 1, 4)
+)
+
+# Create Employee data frame
+Employee <- data.frame(
+  employee_id = c(1, 2, 3, 4),
+  name = c('Khaled', 'Ali', 'John', 'Doe'),
+  experience_years = c(3, 2, 1, 2)
+)
+
+Project %>%
+  left_join(Employee, by = 'employee_id') %>%
+  group_by(project_id) %>%
+  summarise(average_years = round(mean(experience_years), 2), .groups = 'drop')
+
+```
+
+## 1633. Percentage of Users Attended a Contest
+
+Write a solution to find the percentage of the users registered in each contest rounded to two decimals.
+
+Return the result table ordered by percentage in descending order. In case of a tie, order it by contest_id in ascending order.
+
+```{sql}
+select contest_id,
+round(count(distinct user_id)/(select count(*) from Users )*100,2) as percentage
+from Register 
+group by contest_id
+order by percentage desc,contest_id;
+```
+
+```{r}
+
+Users <- data.frame(
+  user_id = c(6, 2, 7),
+  user_name = c('Alice', 'Bob', 'Alex')
+)
+
+Register <- data.frame(
+  contest_id = c(215, 209, 208, 210, 208, 209, 209, 215, 208, 210, 207, 210),
+  user_id = c(6, 2, 2, 6, 6, 7, 6, 7, 7, 2, 2, 7)
+)
+
+# Count the number of unique users
+total_users <- Users %>% 
+  distinct(user_id) %>% 
+  summarise(tot=n())
+
+Register %>%
+  group_by(contest_id) %>%
+  summarise(registered_users = n(), .groups = 'drop') %>%
+  mutate(percentage = round((registered_users / total_users$tot) * 100, 2)) %>%
+  arrange(desc(percentage), contest_id)
+
+```
+
+## 1211. Queries Quality and Percentage
+
+Write a solution to find each query_name, the quality and poor_query_percentage.
+
+Both quality and poor_query_percentage should be rounded to 2 decimal places.
+
+Return the result table in any order.
+
+```{sql}
+
+
+select query_name,
+round(avg(rating/position),2) as quality,
+round(avg(rating<3)*100,2) as poor_query_percentage
+from Queries
+group by query_name
+```
+
+
+```{r}
+Queries <- data.frame(
+  query_name = c('Dog', 'Dog', 'Dog', 'Cat', 'Cat', 'Cat'),
+  result = c('Golden Retriever', 'German Shepherd', 'Mule', 'Shirazi', 'Siamese', 'Sphynx'),
+  position = c(1, 2, 200, 5, 3, 7),
+  rating = c(5, 5, 1, 2, 3, 4)
+)
+
+# Calculate quality and poor query percentage
+Queries %>% 
+  group_by(query_name) %>% 
+  summarise(quality = round(mean(rating/position),2),
+            poor_query_percentage = round(mean(rating<3)*100,2))
+
+```
+
+## 1193. Monthly Transactions I
+
+Write an SQL query to find for each month and country, the number of transactions and their total amount, the number of approved transactions and their total amount.
+
+Return the result table in any order.
+```{sql}
+select LEFT(trans_date, 7) AS month, country,
+count(*) as trans_count,
+sum(state='approved') as approved_count,
+sum(amount) as trans_total_amount,
+sum(if(state='approved',amount,0)) as approved_total_amount
+from Transactions
+group by 1,2
+
+```
+
+```{r}
+Transactions <- data.frame(
+  id = c(121, 122, 123, 124),
+  country = c("US", "US", "US", "DE"),
+  state = c("approved", "declined", "approved", "approved"),
+  amount = c(1000, 2000, 2000, 2000),
+  trans_date = as.Date(c("2018-12-18", "2018-12-19", "2019-01-01", "2019-01-07"))
+)
+
+Transactions %>% 
+  mutate(month = format(trans_date,'%Y-%m')) %>% 
+  group_by(month,country) %>% 
+  summarise(
+    trans_count = n(),
+    approved_count = sum(state=='approved'),
+    trans_total_amount = sum(amount),
+    approved_total_amount = sum(amount[state=='approved'])
+  )
+
+```
+
+## 1174. Immediate Food Delivery II
+
+```{sql}
+select round(avg(order_date=customer_pref_delivery_date)*100,2)as immediate_percentage
+from Delivery
+where ( customer_id,order_date)in (
+select customer_id,min(order_date)
+from Delivery
+group by customer_id
+)
+
+```
+
+```{r}
+
+Delivery <- data.frame(
+  delivery_id = c(1, 2, 3, 4, 5, 6, 7),
+  customer_id = c(1, 2, 1, 3, 3, 2, 4),
+  order_date = as.Date(c('2019-08-01', '2019-08-02', '2019-08-11', '2019-08-24', '2019-08-21', '2019-08-11', '2019-08-09')),
+  customer_pref_delivery_date = as.Date(c('2019-08-02', '2019-08-02', '2019-08-12', '2019-08-24', '2019-08-22', '2019-08-13', '2019-08-09'))
+)
+
+
+Delivery %>% 
+  group_by(customer_id) %>% 
+  filter(order_date == min(order_date)) %>% 
+  ungroup() %>% 
+  summarise(tot = n(),immediate_order = sum(order_date==customer_pref_delivery_date)) %>% 
+  mutate(immediate_percentage = round(immediate_order /tot*100, 2))%>%
+  select(immediate_percentage)
+
+```
+## **550. Game Play Analysis IV**
+
+Write a solution to report the fraction of players that logged in again on the day after the day they first logged in, rounded to 2 decimal places. In other words, you need to count the number of players that logged in for at least two consecutive days starting from their first login date, then divide that number by the total number of players.
+
+
+```{sql}
+select round(count(player_id)/(select count(distinct player_id) from Activity),2) as fraction
+from Activity 
+where (player_id,DATE_SUB(event_date, INTERVAL 1 DAY)) in (
+select player_id, min(event_date)
+from Activity
+group by player_id
+);
+
+```
+
+
+```{r}
+Activity <- data.frame(
+  player_id = c(1, 1, 2, 3, 3),
+  device_id = c(2, 2, 3, 1, 4),
+  event_date = as.Date(c('2016-03-01', '2016-03-02', '2017-06-25', '2016-03-02', '2018-07-03')),
+  games_played = c(5, 6, 1, 0, 5)
+)
+
+num<-Activity %>% 
+  group_by(player_id) %>% 
+  filter(event_date==min(event_date)+1) %>% 
+  summarise(num = n(),.groups = 'drop') %>% 
+  pull(num)
+
+# Check if player logged in the day after their first login
+tot_login <- Activity %>%
+  distinct(player_id) %>% 
+summarise(num = n(),.groups = 'drop') %>% 
+  pull(num)
+
+# Calculate fraction
+fraction <- round(num /tot_login, 2)
+
+# Create result data frame
+result <- data.frame(fraction = fraction)
+print(result)
+```
+
+## 2356. Number of Unique Subjects Taught by Each Teacher
+Write a solution to calculate the number of unique subjects each teacher teaches in the university.
+
+Return the result table in any order.
+```{sql}
+select teacher_id, count( distinct subject_id) as cnt
+from Teacher
+group by teacher_id
+```
+
+```{r}
+Teacher <- data.frame(
+  teacher_id = c(1, 1, 1, 2, 2, 2, 2),
+  subject_id = c(2, 2, 3, 1, 2, 3, 4),
+  dept_id = c(3, 4, 3, 1, 1, 1, 1)
+)
+Teacher %>% 
+  group_by(teacher_id) %>% 
+  distinct(subject_id) %>% 
+  summarise(cnt=n(),.groups='drop')
+  
+```
+
+
+## 1141. User Activity for the Past 30 Days I
+Write a solution to find the daily active user count for a period of 30 days ending 2019-07-27 inclusively. A user was active on someday if they made at least one activity on that day.
+
+Return the result table in any order.
+
+```{sql}
+select activity_date as day,
+count(distinct user_id) as active_users
+from Activity
+where DATEDIFF('2019-07-27',activity_date)< 30
+and DATEDIFF('2019-07-27', activity_date)>=0
+group by 1
+```
+
+```{r}
+
+# Creating Activity table
+Activity <- data.frame(
+  user_id = c(1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4),
+  session_id = c(1, 1, 1, 4, 4, 4, 2, 2, 2, 3, 3),
+  activity_date = as.Date(c(
+    "2019-07-20", "2019-07-20", "2019-07-20",
+    "2019-07-20", "2019-07-21", "2019-07-21",
+    "2019-07-21", "2019-07-21", "2019-07-21",
+    "2019-06-25", "2019-06-25")),
+  activity_type = c(
+    "open_session", "scroll_down", "end_session",
+    "open_session", "send_message", "end_session",
+    "open_session", "send_message", "end_session",
+    "open_session", "end_session")
+)
+
+Activity %>%   
+  filter(activity_date >= as.Date("2019-07-27")-30 & activity_date <= as.Date("2019-07-27")) %>% 
+  group_by(activity_date) %>% 
+  distinct(user_id) %>% 
+  summarise(active_users = n())
+```
+
+## 1070. Product Sales Analysis III
+
+Write a solution to select the product id, year, quantity, and price for the first year of every product sold.
+
+Return the resulting table in any order.
+
+```{sql}
+select product_id, year as first_year, quantity, price
+from Sales
+where (product_id, year) in (
+select product_id,min(year)
+from Sales
+group by product_id
+);
+```
+
+
+```{r}
+Sales <- data.frame(
+  sale_id = c(1, 2, 7),
+  product_id = c(100, 100, 200),
+  year = c(2008, 2009, 2011),
+  quantity = c(10, 12, 15),
+  price = c(5000, 5000, 9000)
+)
+
+
+Sales %>%
+  group_by(product_id) %>%
+  filter(year == min(year)) %>%
+  select(product_id, first_year = year, quantity, price) %>%
+  ungroup()
+
+
+
+```
+
+## 596. Classes More Than 5 Students
+
+Write a solution to find all the classes that have at least five students.
+
+Return the result table in any order.
+
+```{sql}
+select class
+from Courses
+group by class
+having count(student)>=5
+```
+
+```{r}
+Courses <- data.frame(
+  student = c("A", "B", "C", "D", "E", "F", "G", "H", "I"),
+  class = c("Math", "English", "Math", "Biology", "Math", 
+            "Computer", "Math", "Math", "Math")
+)
+
+Courses %>% 
+  group_by(class) %>% 
+  summarise(num=n()) %>% 
+  filter(num>=5)%>% 
+  select(class)
+  
+```
+
+## 1729. Find Followers Count
+
+Write a solution that will, for each user, return the number of followers.
+
+Return the result table ordered by user_id in ascending order.
+
+```{sql}
+select user_id,
+ count(*) as followers_count
+from Followers
+group by user_id
+order by user_id asc;
+```
+
+
+```{r}
+Followers <- data.frame(
+  user_id = c(0, 1, 2, 2),
+  follower_id = c(1, 0, 0, 1)
+)
+Followers %>% 
+  group_by(user_id) %>% 
+  summarise(followers_count = n()) %>% 
+  arrange(user_id)
+```
+## 619. Biggest Single Number. --subset use where ...in...
+A single number is a number that appeared only once in the MyNumbers table.
+
+Find the largest single number. If there is no single number, report null.
+
+```{sql}
+select max(num) as num 
+from MyNumbers
+where num in (
+select max(num)
+from MyNumbers
+group by num
+having count(num)=1
+)
+
+```
+
+```{r}
+MyNumbers <- data.frame(
+  num = c(8, 8, 3, 3, 1, 4, 5, 6) # Example 1 input
+)
+
+MyNumbers <- data.frame(
+  num = c(8, 8, 7, 7, 3, 3, 3) # Example 2 input
+)
+
+MyNumbers %>% 
+  group_by(num) %>% 
+  summarise(totnum = n(),.groups='drop') %>% 
+  filter(totnum ==1) %>% 
+  summarise(num = ifelse(n() > 0, max(num), NA))
+
+```
+
+
+## 1045. Customers Who Bought All Products
+
+Write a solution to report the customer ids from the Customer table that bought all the products in the Product table.
+
+Return the result table in any order.
+
+```{sql}
+select customer_id
+from Customer
+group by customer_id
+having count(distinct product_key) = (select count(product_key) from Product)
+```
+
+
+
+```{r}
+Customer <- data.frame(
+  customer_id = c(1, 2, 3, 3, 1),
+  product_key = c(5, 6, 5, 6, 6)
+)
+# Creating Product table
+Product <- data.frame(
+  product_key = c(5, 6)
+)
+
+Customer %>% 
+  group_by(customer_id) %>% 
+  distinct(product_key) %>% 
+  summarise(numkey=n(),.groups = 'drop') %>% 
+  filter(numkey == nrow(Product)) %>% 
+  select(customer_id)
+
+
+```
+
+## 1731. The Number of Employees Which Report to Each Employee
+For this problem, we will consider a manager an employee who has at least 1 other employee reporting to them.
+
+Write a solution to report the ids and the names of all managers, the number of employees who report directly to them, and the average age of the reports rounded to the nearest integer.
+
+Return the result table ordered by employee_id.
+```{sql}
+with manager as (
+select *,count(*) as reports_count,round(avg(age)) as average_age
+from Employees
+group by reports_to
+)
+select e.employee_id,e.name, m.reports_count,m.average_age
+from Employees e
+inner join manager m
+on e.employee_id=m.reports_to
+order by employee_id
+
+```
+
+
+```{r}
+Employees <- data.frame(
+  employee_id = c(9, 6, 4, 2),
+  name = c("Hercy", "Alice", "Bob", "Winston"),
+  reports_to = c(NA, 9, 9, NA),
+  age = c(43, 41, 36, 37)
+)
+
+# round() uses  "round to even" rule (also known as bankers' rounding)
+Employees %>% 
+  group_by(reports_to) %>% 
+  summarise(reports_count=n(),
+            average_age = round(mean(age)+0.01)) %>% 
+  inner_join(Employees,by=c('reports_to'='employee_id')) %>% 
+  select(employee_id=reports_to,name,reports_count,average_age)
+```
+## 1789. Primary Department for Each Employee
+
+Employees can belong to multiple departments. When the employee joins other departments, they need to decide which department is their primary department. Note that when an employee belongs to only one department, their primary column is 'N'.
+
+Write a solution to report all the employees with their primary department. For employees who belong to one department, report their only department.
+
+Return the result table in any order.
+
+```{sql}
+select employee_id, department_id
+from Employee
+where primary_flag ='Y' or employee_id in (
+select employee_id
+from Employee
+group by employee_id
+having count(employee_id)=1
+)
+```
+
+```{r}
+
+Employee <- data.frame(
+  employee_id = c(1, 2, 2, 3, 4, 4, 4),
+  department_id = c(1, 1, 2, 3, 2, 3, 4),
+  primary_flag = c("N", "Y", "N", "N", "N", "Y", "N")
+)
+
+Employee %>% 
+  group_by(employee_id) %>% 
+  filter(primary_flag=='Y' | n()==1) %>% 
+  select(employee_id, department_id) %>%
+  ungroup()
+```
+## 610. Triangle Judgement
+Report for every three line segments whether they can form a triangle.
+
+Return the result table in any order.
+
+```{sql}
+select *, 
+case 
+when x+y>z and x+z>y and y+z>x then 'Yes'
+else 'No'
+end as triangle 
+from Triangle
+
+```
+
+```{r}
+Triangle <- data.frame(
+  x = c(13, 10),
+  y = c(15, 20),
+  z = c(30, 15)
+)
+
+Triangle %>% 
+  mutate(triangle = ifelse(x+y>z&x+z>x&y+z>x,'Yes','No'))
+```
+
+## **180. Consecutive Numbers**
+
+Find all numbers that appear at least three times consecutively.
+
+Return the result table in any order.
+
+```{sql}
+select 
+from Logs l1,
+Logs l2,
+Logs l3
+where l1.id=l2.id-1
+and l2.id=l3.id-1
+and l1.num=l2.num
+and l2.num=l3.num
+```
+
+```{r}
+# Create Logs data frame
+Logs <- data.frame(
+  id = c(1, 2, 3, 4, 5, 6, 7),
+  num = c(1, 1, 1, 2, 1, 2, 2)
+)
+
+Logs %>% 
+  mutate(consecutive_group = cumsum(num!=lag(num,default = first(num)))) %>% 
+  group_by(consecutive_group) %>% 
+  filter(n()>=3) %>% 
+  ungroup() %>% 
+  select(ConsecutiveNums = num) %>%
+  distinct()
+
+# OR
+
+Logs %>%
+  mutate(consecutive_group = cumsum(num != lag(num, default = first(num)))) %>%
+  group_by(consecutive_group, num) %>%
+  summarise(count = n(), .groups = 'drop') %>%
+  filter(count >= 3) %>%
+  select(ConsecutiveNums = num) %>%
+  distinct()
+
+```
+## 1164. Product Price at a Given Date
+
+Write a solution to find the prices of all products on 2019-08-16. Assume the price of all products before any change is 10.
+
+Return the result table in any order.
+
+
+```{sql}
+select product_id, 10 as price
+from Products
+group by product_id
+having min(change_date) > '2019-08-16'
+union
+select product_id, new_price as price
+from Products
+where (product_id,change_date) in (
+select product_id,max(change_date)
+from Products
+where change_date<='2019-08-16'
+group by product_id
+)
+```
+
+
+```{r}
+library(dplyr)
+# Create Products data frame
+Products <- data.frame(
+  product_id = c(1, 2, 1, 1, 2, 3),
+  new_price = c(20, 50, 30, 35, 65, 20),
+  change_date = as.Date(c('2019-08-14', '2019-08-14', '2019-08-15', '2019-08-16', '2019-08-17', '2019-08-18'))
+)
+
+# Find prices of all products on 2019-08-16
+price_10 <- Products %>%
+  group_by(product_id) %>% 
+  filter(min(change_date)>as.Date('2019-08-16')) %>% 
+  mutate(price=10)%>% 
+  ungroup() %>%
+  select(product_id, price)
+  
+price_other<-Products %>%
+  group_by(product_id) %>% 
+  filter(change_date<=as.Date('2019-08-16') ) %>% 
+  slice_max(change_date, n = 1) %>% 
+  ungroup() %>%
+  select(product_id, price = new_price)
+
+
+result <- rbind(price_other,price_10)
+print(result)
+```
+
+## 1204. Last Person to Fit in the Bus
+
+There is a queue of people waiting to board a bus. However, the bus has a weight limit of 1000 kilograms, so there may be some people who cannot board.
+
+Write a solution to find the person_name of the last person that can fit on the bus without exceeding the weight limit. The test cases are generated such that the first person does not exceed the weight limit.
+
+Note that only one person can board the bus at any given turn.
+
+```{sql}
+with sum_wt as(
+select *,
+sum(weight) over (order by turn) as sum_wt
+from Queue
+)
+select person_name
+from sum_wt
+where sum_wt<=1000
+order by turn desc
+limit 1
+```
+
+
+```{r}
+Queue <- data.frame(
+  person_id = c(5, 4, 3, 6, 1, 2),
+  person_name = c('Alice', 'Bob', 'Alex', 'John Cena', 'Winston', 'Marie'),
+  weight = c(250, 175, 350, 400, 500, 200),
+  turn = c(1, 5, 2, 3, 6, 4)
+)
+
+# Determine the last person who can fit on the bus without exceeding 1000 kg
+result <- Queue %>%
+  arrange(turn) %>%
+  mutate(cumulative_weight = cumsum(weight)) %>%
+  filter(cumulative_weight <= 1000) %>%
+  slice_tail(n = 1) %>%
+  select(person_name)
+
+# Display the result
+print(result)
+```
+##
+
+```{sql}
+select "Low Salary" as category,
+sum(CASE WHEN income < 20000 THEN 1 ELSE 0 END)AS accounts_count
+from Accounts
+union 
+select "Average Salary" as category,
+sum(CASE WHEN income >= 20000 and income<=50000 THEN 1 ELSE 0 END)AS accounts_count
+from Accounts
+union 
+select "High Salary" as category,
+sum(CASE WHEN income > 50000 THEN 1 ELSE 0 END)AS accounts_count
+from Accounts
+
+```
+
+```{r}
+library(dplyr)
+
+# Create Accounts data frame
+Accounts <- data.frame(
+  account_id = c(3, 2, 8, 6),
+  income = c(108939, 12747, 87709, 91796)
+)
+
+# Categorize salaries and count accounts
+result <- Accounts %>%
+  mutate(category = case_when(
+    income < 20000 ~ 'Low Salary',
+    income >= 20000 & income <= 50000 ~ 'Average Salary',
+    income > 50000 ~ 'High Salary'
+  )) %>%
+  group_by(category) %>%
+  summarise(accounts_count = n(), .groups = 'drop')
+categories <- data.frame(category = c('Low Salary', 'Average Salary', 'High Salary'))
+result <- categories %>%
+  left_join(result, by = 'category') %>%
+  mutate(accounts_count = ifelse(is.na(accounts_count), 0, accounts_count))
+```
+
+##
+
+```{sql}
+
+select
+case 
+    when mod(id,2)!=0 and id+1<= (select count(*)from Seat) then id+1
+    when mod(id,2)=0 then id-1
+    else id
+end as id, 
+student
+from Seat
+order by id asc
+
+```
+
+```{r}
+library(dplyr)
+
+# Create Seat data frame
+Seat <- data.frame(
+  id = c(1, 2, 3, 4, 5),
+  student = c("Abbot", "Doris", "Emerson", "Green", "Jeames")
+)
+
+# Swap seats of every two consecutive students
+result <- Seat %>%
+  mutate(id = ifelse(id %% 2 == 1 & id != n(), id + 1, ifelse(id %% 2 == 0, id - 1, id))) %>%
+  arrange(id)
+
+# Display the result
+print(result)
+```
+
+
+## **1321. Restaurant Growth**
+
+```{sql}
+with DailyAmount as(
+    select visited_on,
+    sum(amount) as amount
+    from Customer
+    group by visited_on
+),
+SevenDayWindow as(
+    select visited_on,
+    sum(amount) over (
+        order by visited_on ROWS BETWEEN 6 PRECEDING AND CURRENT ROW ) as amount,
+    avg(amount) over(order by visited_on ROWS BETWEEN 6 PRECEDING AND CURRENT ROW ) as average_amount
+    from DailyAmount
+)
+select visited_on, amount, round(average_amount,2) as average_amount 
+from SevenDayWindow
+where visited_on>=DATE_ADD((select min(visited_on) from Customer),interval 6 day)
+order by visited_on;
+```
+
